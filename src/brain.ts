@@ -89,14 +89,55 @@ function firstNotebookLine(p:string){
  const first=p.match(/[^.!?।]+[.!?।]/)?.[0]?.trim()||p;
  return first.length>200?first.slice(0,197).trimEnd()+'...':first;
 }
-export function notebookKnowledgeReply(notebook:string,lang:'mr'|'en'){
+let personalVoiceTurn=0;
+function notebookName(block:string){
+ return block.match(/(?:my human is|my name is|i am)\s+([^.!?\n]{3,60})/i)?.[1]?.trim()||block.match(/(?:माझे नाव|माझं नाव)\s+([^.!?।\n]{3,60})/)?.[1]?.trim()||'';
+}
+function personalFacts(notebook:string){
+ const facts:string[]=[];
+ const text=notebookParagraphs(notebook).join(' ');
+ const place=text.match(/(?:he|she|my human) lives in ([^.!?]+)[.!?]/i)?.[1]?.trim();
+ if(place)facts.push(place+' इथे तू राहतोस.');
+ if(/\bgold valuer\b/i.test(text))facts.push('तू सोन्याचं मूल्यांकन करतोस'+(/banks trust/i.test(text)?', आणि बँका तुझ्या पारखी नजरेवर विश्वास ठेवतात.':'.'));
+ if(/(?:jeweller|sonar) family/i.test(text))facts.push('तुझ्या घरात सोनार कामाची परंपरा आहे'+(/grandfather started/i.test(text)?'; दुकानाची सुरुवात आजोबांनी केली.':'.'));
+ if(/\bdesigner\b/i.test(text)){
+  const pages=text.match(/(?:family pages|designs? for) ([^.!?]+)[.!?]/i)?.[1]?.trim();
+  facts.push('डिझाइन हेही तुझं काम आहे'+(pages?' - '+pages+' साठी.':'.'));
+ }
+ const channel=text.match(/(?:he|she|my human) runs ([^,.;!?]+)[,.;!?]/i)?.[1]?.trim();
+ if(channel)facts.push(channel+' तू चालवतोस'+(/daily gold and silver rates/i.test(text)?'; सोन्या-चांदीचे रोजचे दर लोकांपर्यंत पोहोचवतोस.':'.'));
+ const salon=text.match(/salon channel, ([^.!?]+)[.!?]/i)?.[1]?.trim();
+ if(salon)facts.push(salon+' च्या कामातही तू मदत करतोस.');
+ if(/building (?:his|her) income online/i.test(text))facts.push('ऑनलाइन उत्पन्न वाढवायचं आहे तुला, शक्यतो मोफत आणि हुशार मार्गांनी.');
+ if(/cares about privacy/i.test(text))facts.push('तुझी खासगी माहिती खासगीच राहायला हवी, हे माझ्या लक्षात आहे.');
+ if(/premium, clean, apple-like/i.test(text))facts.push('स्वच्छ, प्रीमियम, Apple-सारखं डिझाइन तुला आवडतं.');
+ if(/accuracy before speed/i.test(text))facts.push('घाईपेक्षा अचूकपणा तुला महत्त्वाचा आहे.');
+ return facts;
+}
+export function notebookKnowledgeReply(notebook:string,lang:'mr'|'en',brief=false){
  const block=identityBlock(notebook);
- if(!block)return lang==='mr'?'तुझ्याबद्दल स्पष्ट माहिती खासगी पुस्तकात अजून जतन केलेली नाही. Notes मध्ये ती लिहून जतन कर.':'Your private notebook has no clear personal information saved yet. Add it in Notes and save it.';
- const parts=notebookParagraphs(notebook).filter(p=>!p.startsWith(block)&&p.length>25);
- return (lang==='mr'?'तुझ्या खासगी पुस्तकात लिहिलंय: ':'Your private notebook says: ')+firstNotebookLine(block)+(parts.length?'\n'+parts.map(p=>'- '+firstNotebookLine(p)).join('\n'):'');
+ if(!block)return 'बॉस, तुझ्याबद्दलची माहिती अजून माझ्या खासगी पुस्तकात स्पष्ट जतन झालेली नाही. Notes मध्ये लिहून जतन करशील?';
+ const name=notebookName(block);const turn=personalVoiceTurn++%3;
+ const starts=name?[
+  'अरे बॉस, '+name+'! तू जतन केलेल्या गोष्टी माझ्या लक्षात आहेत.',
+  'हो बॉस, '+name+'. तू सांगितलेलं मी इथे आठवून सांगते.',
+  'बॉस, '+name+' - तुझ्याबद्दल तू जतन केलेली माहिती माझ्याकडे आहे.'
+ ]:[
+  'बॉस, तू जतन केलेल्या गोष्टी मी आठवून सांगते.',
+  'हो बॉस, तुझ्याबद्दल इथे जतन केलेली माहिती माझ्याकडे आहे.',
+  'बॉस, तू लिहून ठेवलेल्या गोष्टी माझ्या लक्षात आहेत.'
+ ];
+ if(brief)return starts[turn];
+ const facts=personalFacts(notebook);
+ if(facts.length)return starts[turn]+'\n\n'+facts.join(' ');
+ // Unknown prose is not translated or embellished by guessed templates.
+ return starts[turn]+' अजून नेमकं काय आठवायचं आहे ते विचार; पुस्तकात नसलेली गोष्ट मी बनवून सांगणार नाही.';
 }
 export function personalNotebookReply(text:string,notebook:string,lang:'mr'|'en'){
- return isPersonalKnowledgeQuestion(text)?notebookKnowledgeReply(notebook,lang):null;
+ if(!isPersonalKnowledgeQuestion(text))return null;
+ const q=text.toLowerCase().replace(/[?.!।]/g,'').trim();
+ const brief=/^(do (you|u) know (me|mi)|(you|u) know (me|mi)|who am i|मला ओळखतेस का|तू मला ओळखतेस का|मी कोण आहे)$/.test(q);
+ return notebookKnowledgeReply(notebook,lang,brief);
 }
 export function filterNotebookDenial(answer:string,question:string,notebook:string,lang:'mr'|'en'){
  if(!identityBlock(notebook))return answer;
@@ -109,7 +150,7 @@ export const disconnectedBrain={async reply(text:string,language:'mr'|'en',histo
  const personal=personalNotebookReply(text,notebook,language);if(personal)return personal;
  const identity=identityReply(text,language);if(identity)return identity;
  const current=engine;const token=epoch;
- if(!current||brainStatus()!=='ready')return language==='mr'?'AI सध्या बंद आहे. फोन तपास आणि जतन केलेले मॉडेल पुन्हा लोड कर. कॅश अपूर्ण असल्यास इंटरनेट लागेल. तुझी नोंद तरीही जतन करता येते.':'AI is off. Check phone, then load the saved model again. An incomplete cache may need internet. You can still save notes.';
+ if(!current||brainStatus()!=='ready')return 'बॉस, मी इथे आहे. तू लिही, तुझं म्हणणं जतन होईल. मोकळ्या गप्पांसाठी छोटा AI अजून सुरू करायचा आहे.';
  const excerpt=notebookExcerpt(notebook,text);
  const recent=history.slice(-2).map(m=>({role:m.role,content:m.text.slice(0,60)}));
  try{
