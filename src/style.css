@@ -18,3 +18,5 @@ html,body{margin:0;padding:0;background:#fafbfb}body{min-height:100vh}.app-frame
 .diagnostics{font-size:11px;line-height:1.8;color:#758084;margin:18px 0}.diagnostics p{overflow-wrap:anywhere;font-family:ui-monospace,monospace;font-size:10px}
 
 html.roop-chat-active,html.roop-chat-active body{overflow:hidden;height:100%;overscroll-behavior:none}.chat-mode{position:fixed;top:var(--roop-top,0px);left:0;right:0;width:100%;height:var(--roop-vh,100dvh);max-height:var(--roop-vh,100dvh);margin:0;z-index:1;border-radius:0;transform:none}.chat-mode .content{overflow:hidden}.chat-mode .composer{margin-top:8px;margin-bottom:0;flex-shrink:0}.keyboard-open.chat-mode{padding-bottom:8px}.keyboard-open.chat-mode .composer{margin-bottom:0}@media(min-width:700px){.chat-mode{max-width:1040px;margin:0 auto;height:var(--roop-vh,100dvh)}}
+
+.wake-status{flex:none;text-align:center;font-size:11px;line-height:1.6;color:#778382;margin:0 0 7px}
