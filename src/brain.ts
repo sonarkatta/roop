@@ -58,7 +58,8 @@ export async function startBrain(progress:(p:number,text:string)=>void){
 }
 export function identityReply(text:string,lang:'mr'|'en'){
  const q=text.toLowerCase().trim().replace(/[?.!।]/g,'').replace(/\s+/g,' ');
- if(/^(what('?s| is) your name|who are you|your name is roop|tu(z|jh|j)a na(v|me)( kay| kai)?|तुझं नाव काय|तुझे नाव काय|तुझ नाव काय|तू कोण आहेस|तुझं नाव रूप आहे)$/.test(q))return lang==='mr'?'माझं नाव रूप आहे. (अ‍ॅपचे ठरलेले उत्तर, AI ने तयार केलेले नाही.)':'My name is Roop. (App identity reply, not AI-generated.)';
+ if(/^(hi|hello|hey|नमस्कार|हाय)$/.test(q))return lang==='mr'?'हाय, मी रूप. काय बोलायचंय? (अ‍ॅपचे ठरलेले उत्तर.)':"Hi, I'm Roop. What's on your mind? (App reply.)";
+ if(/^(what('?s| is) your name|who are you|your name is roop|tu(z|jh|j)a na(v|me)( kay| kai)?|तुझं नाव काय|तुझे नाव काय|तुझ नाव काय|तू कोण आहेस|तुझं नाव रूप आहे)$/.test(q))return lang==='mr'?'मी रूप. तुझ्या फोनवरचा छोटा AI. (अ‍ॅपचे ठरलेले उत्तर.)':"I'm Roop, your small on-phone AI. (App reply, not AI-generated.)";
  return null;
 }
 export function notebookExcerpt(notebook:string,question:string){
