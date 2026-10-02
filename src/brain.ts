@@ -41,13 +41,13 @@ export async function compatibility(){
 }
 async function dispose(old:MLCEngineInterface|null){if(!old)return;try{old.interruptGenerate();await old.unload()}catch{}}
 export function stopBrain(){epoch++;const old=engine;const loading=pending;engine=null;pending=null;status('off');return Promise.all([dispose(old),dispose(loading)]).then(()=>{})}
-export async function startBrain(progress:(p:number,text:string)=>void,cachedOnly=false){
+export async function startBrain(progress:(p:number,text:string)=>void){
  const cleanup=stopBrain();const token=++epoch;status('loading');let candidate:MLCEngineInterface|null=null;
  const guard=()=>{if(token!==epoch)throw Error('AI was reset or the space locked. Reply discarded.')};
  try{
   await cleanup;guard();
   const check=await compatibility();guard();if(!check.ok)throw Error(check.reason);
-  if(cachedOnly||!navigator.onLine){const audit=await auditModelCache();guard();if(!audit.complete)throw Error('Saved files missing: '+audit.missing.join(', ')+'. Go online and load once to repair the cache.')}
+  if(!navigator.onLine){const audit=await auditModelCache();guard();if(!audit.complete)throw Error('Offline files missing: '+audit.missing.join(', ')+'. Go online and load once to repair the cache.')}
   const {MLCEngine,prebuiltAppConfig}=await import('@mlc-ai/web-llm');guard();
   const model=prebuiltAppConfig.model_list.find(m=>m.model_id===MODEL);if(!model)throw Error('Trial model is unavailable.');
   candidate=new MLCEngine({appConfig:{model_list:[model],cacheBackend:'cache'},initProgressCallback:r=>{if(token===epoch)progress(r.progress,r.text)}});
@@ -77,7 +77,7 @@ export function notebookExcerpt(notebook:string,question:string){
 }
 export function personalNotebookReply(text:string,notebook:string,lang:'mr'|'en'){
  const q=text.toLowerCase().replace(/[?.!]/g,'').trim();
- if(!/^(what else (do )?(you|u) know about (me|mi)|tell me (more )?about (me|myself)|do (you|u) know (me|mi)|((you|u) know (me|mi))|what (do )?(you|u) know about (me|mi)|who am i|तू मला ओळखतेस का|तुला माझ्याबद्दल काय माहित आहे)$/.test(q))return null;
+ if(!/^(do (you|u) know (me|mi)|((you|u) know (me|mi))|what (do )?(you|u) know about (me|mi)|who am i|तू मला ओळखतेस का|तुला माझ्याबद्दल काय माहित आहे)$/.test(q))return null;
  const block=identityBlock(notebook);if(!block)return null;
  const first=block.match(/[^.!?]+[.!?]/)?.[0]?.trim()||block.slice(0,180);
  return lang==='mr'?'तुझ्या खासगी पुस्तकात लिहिलंय: '+first:'Your private notebook says: '+first;
